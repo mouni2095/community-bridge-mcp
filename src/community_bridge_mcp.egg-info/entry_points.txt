@@ -1,0 +1,3 @@
+[console_scripts]
+community-bridge-reset = community_bridge.seed:main
+community-bridge-server = community_bridge.server:main

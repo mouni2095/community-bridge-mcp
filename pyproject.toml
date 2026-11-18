@@ -1,0 +1,30 @@
+[project]
+name = "community-bridge-mcp"
+version = "1.0.0"
+description = "Emergency assistance funding MCP server (take-home exercise)"
+requires-python = ">=3.12"
+dependencies = [
+    "mcp==2.3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.4.2",
+    "pytest-asyncio==1.2.0",
+]
+
+[project.scripts]
+community-bridge-server = "community_bridge.server:main"
+community-bridge-reset = "community_bridge.seed:main"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = ["e2e: end-to-end tests that spawn the MCP server over stdio"]
