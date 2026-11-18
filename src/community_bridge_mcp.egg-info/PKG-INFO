@@ -1,9 +1,0 @@
-Metadata-Version: 2.4
-Name: community-bridge-mcp
-Version: 1.0.0
-Summary: Emergency assistance funding MCP server (take-home exercise)
-Requires-Python: >=3.12
-Requires-Dist: mcp==2.3.0
-Provides-Extra: dev
-Requires-Dist: pytest==8.4.2; extra == "dev"
-Requires-Dist: pytest-asyncio==1.2.0; extra == "dev"

@@ -6,3 +6,4 @@ data/
 *.db-*
 .pytest_cache/
 *.log
+*.egg-info/
