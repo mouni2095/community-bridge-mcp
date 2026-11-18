@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "community-bridge-case-worker": {
+      "command": "/ABSOLUTE/PATH/cb-mcp/.venv/bin/python",
+      "args": ["-m", "community_bridge"],
+      "env": {
+        "CB_STAFF_ID": "cb-case-worker",
+        "CB_DB_PATH": "/ABSOLUTE/PATH/cb-mcp/data/community_bridge.db"
+      }
+    },
+    "community-bridge-program-manager": {
+      "command": "/ABSOLUTE/PATH/cb-mcp/.venv/bin/python",
+      "args": ["-m", "community_bridge"],
+      "env": {
+        "CB_STAFF_ID": "cb-program-manager",
+        "CB_DB_PATH": "/ABSOLUTE/PATH/cb-mcp/data/community_bridge.db"
+      }
+    },
+    "community-bridge-finance": {
+      "command": "/ABSOLUTE/PATH/cb-mcp/.venv/bin/python",
+      "args": ["-m", "community_bridge"],
+      "env": {
+        "CB_STAFF_ID": "cb-finance",
+        "CB_DB_PATH": "/ABSOLUTE/PATH/cb-mcp/data/community_bridge.db"
+      }
+    }
+  }
+}

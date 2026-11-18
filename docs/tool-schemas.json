@@ -1,0 +1,2131 @@
+[
+  {
+    "name": "whoami",
+    "description": "Return the staff identity this server acts as: role, nonprofit and permissions.",
+    "inputSchema": {
+      "properties": {},
+      "title": "whoamiArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "$defs": {
+        "Role": {
+          "enum": [
+            "case_worker",
+            "program_manager",
+            "finance"
+          ],
+          "title": "Role",
+          "type": "string"
+        }
+      },
+      "properties": {
+        "staff_id": {
+          "title": "Staff Id",
+          "type": "string"
+        },
+        "display_name": {
+          "title": "Display Name",
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/$defs/Role"
+        },
+        "nonprofit_id": {
+          "title": "Nonprofit Id",
+          "type": "string"
+        },
+        "nonprofit_name": {
+          "title": "Nonprofit Name",
+          "type": "string"
+        },
+        "permissions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Permissions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "staff_id",
+        "display_name",
+        "role",
+        "nonprofit_id",
+        "nonprofit_name",
+        "permissions"
+      ],
+      "title": "WhoAmI",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "list_participants",
+    "description": "List participants of your nonprofit, optionally filtered by name or ID.",
+    "inputSchema": {
+      "properties": {
+        "search": {
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name fragment or exact participant ID",
+          "title": "Search"
+        },
+        "limit": {
+          "anyOf": [
+            {
+              "description": "Maximum rows to return (default 50)",
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Limit"
+        }
+      },
+      "title": "list_participantsArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "$defs": {
+        "Participant": {
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "first_name": {
+              "title": "First Name",
+              "type": "string"
+            },
+            "last_name": {
+              "title": "Last Name",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "first_name",
+            "last_name"
+          ],
+          "title": "Participant",
+          "type": "object"
+        }
+      },
+      "properties": {
+        "participants": {
+          "items": {
+            "$ref": "#/$defs/Participant"
+          },
+          "title": "Participants",
+          "type": "array"
+        }
+      },
+      "required": [
+        "participants"
+      ],
+      "title": "ParticipantList",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "list_funds",
+    "description": "List your nonprofit's funds with allocation, committed, paid and available amounts.",
+    "inputSchema": {
+      "properties": {},
+      "title": "list_fundsArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "$defs": {
+        "FundSummary": {
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "name": {
+              "title": "Name",
+              "type": "string"
+            },
+            "allocation": {
+              "$ref": "#/$defs/Money"
+            },
+            "committed": {
+              "$ref": "#/$defs/Money",
+              "description": "Approved, not yet paid"
+            },
+            "paid": {
+              "$ref": "#/$defs/Money"
+            },
+            "available": {
+              "$ref": "#/$defs/Money",
+              "description": "allocation - committed - paid"
+            },
+            "request_counts": {
+              "$ref": "#/$defs/RequestCounts"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "allocation",
+            "committed",
+            "paid",
+            "available",
+            "request_counts"
+          ],
+          "title": "FundSummary",
+          "type": "object"
+        },
+        "Money": {
+          "properties": {
+            "cents": {
+              "description": "Exact amount in integer cents",
+              "title": "Cents",
+              "type": "integer"
+            },
+            "amount": {
+              "description": "Decimal string, e.g. \"300.00\"",
+              "title": "Amount",
+              "type": "string"
+            },
+            "currency": {
+              "const": "USD",
+              "default": "USD",
+              "title": "Currency",
+              "type": "string"
+            }
+          },
+          "required": [
+            "cents",
+            "amount"
+          ],
+          "title": "Money",
+          "type": "object"
+        },
+        "RequestCounts": {
+          "properties": {
+            "Pending": {
+              "default": 0,
+              "title": "Pending",
+              "type": "integer"
+            },
+            "Approved": {
+              "default": 0,
+              "title": "Approved",
+              "type": "integer"
+            },
+            "Rejected": {
+              "default": 0,
+              "title": "Rejected",
+              "type": "integer"
+            },
+            "Paid": {
+              "default": 0,
+              "title": "Paid",
+              "type": "integer"
+            }
+          },
+          "title": "RequestCounts",
+          "type": "object"
+        }
+      },
+      "properties": {
+        "funds": {
+          "items": {
+            "$ref": "#/$defs/FundSummary"
+          },
+          "title": "Funds",
+          "type": "array"
+        }
+      },
+      "required": [
+        "funds"
+      ],
+      "title": "FundList",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "get_funding_summary",
+    "description": "Funding summary for one fund (if fund_id is given) or all funds, with totals.\navailable = allocation - committed (approved, unpaid) - paid.",
+    "inputSchema": {
+      "properties": {
+        "fund_id": {
+          "anyOf": [
+            {
+              "description": "Fund ID from list_funds",
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fund Id"
+        }
+      },
+      "title": "get_funding_summaryArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "$defs": {
+        "FundSummary": {
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "name": {
+              "title": "Name",
+              "type": "string"
+            },
+            "allocation": {
+              "$ref": "#/$defs/Money"
+            },
+            "committed": {
+              "$ref": "#/$defs/Money",
+              "description": "Approved, not yet paid"
+            },
+            "paid": {
+              "$ref": "#/$defs/Money"
+            },
+            "available": {
+              "$ref": "#/$defs/Money",
+              "description": "allocation - committed - paid"
+            },
+            "request_counts": {
+              "$ref": "#/$defs/RequestCounts"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "allocation",
+            "committed",
+            "paid",
+            "available",
+            "request_counts"
+          ],
+          "title": "FundSummary",
+          "type": "object"
+        },
+        "FundingTotals": {
+          "properties": {
+            "allocation": {
+              "$ref": "#/$defs/Money"
+            },
+            "committed": {
+              "$ref": "#/$defs/Money"
+            },
+            "paid": {
+              "$ref": "#/$defs/Money"
+            },
+            "available": {
+              "$ref": "#/$defs/Money"
+            }
+          },
+          "required": [
+            "allocation",
+            "committed",
+            "paid",
+            "available"
+          ],
+          "title": "FundingTotals",
+          "type": "object"
+        },
+        "Money": {
+          "properties": {
+            "cents": {
+              "description": "Exact amount in integer cents",
+              "title": "Cents",
+              "type": "integer"
+            },
+            "amount": {
+              "description": "Decimal string, e.g. \"300.00\"",
+              "title": "Amount",
+              "type": "string"
+            },
+            "currency": {
+              "const": "USD",
+              "default": "USD",
+              "title": "Currency",
+              "type": "string"
+            }
+          },
+          "required": [
+            "cents",
+            "amount"
+          ],
+          "title": "Money",
+          "type": "object"
+        },
+        "RequestCounts": {
+          "properties": {
+            "Pending": {
+              "default": 0,
+              "title": "Pending",
+              "type": "integer"
+            },
+            "Approved": {
+              "default": 0,
+              "title": "Approved",
+              "type": "integer"
+            },
+            "Rejected": {
+              "default": 0,
+              "title": "Rejected",
+              "type": "integer"
+            },
+            "Paid": {
+              "default": 0,
+              "title": "Paid",
+              "type": "integer"
+            }
+          },
+          "title": "RequestCounts",
+          "type": "object"
+        }
+      },
+      "properties": {
+        "funds": {
+          "items": {
+            "$ref": "#/$defs/FundSummary"
+          },
+          "title": "Funds",
+          "type": "array"
+        },
+        "totals": {
+          "$ref": "#/$defs/FundingTotals"
+        }
+      },
+      "required": [
+        "funds",
+        "totals"
+      ],
+      "title": "FundingSummary",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "create_request",
+    "description": "Submit an assistance request (case_worker only). Starts Pending; does not reserve funds.\nRequests cannot be edited after submission.",
+    "inputSchema": {
+      "properties": {
+        "participant_id": {
+          "description": "Participant ID from list_participants",
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Participant Id",
+          "type": "string"
+        },
+        "fund_id": {
+          "description": "Fund ID from list_funds",
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Fund Id",
+          "type": "string"
+        },
+        "purpose": {
+          "description": "Expense type",
+          "enum": [
+            "rent",
+            "utilities",
+            "transportation",
+            "other"
+          ],
+          "title": "Purpose",
+          "type": "string"
+        },
+        "amount": {
+          "description": "USD amount as a decimal string, e.g. \"300.00\"",
+          "pattern": "^[0-9]{1,7}(\\.[0-9]{1,2})?$",
+          "title": "Amount",
+          "type": "string"
+        },
+        "description": {
+          "description": "What the money is for",
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "idempotency_key": {
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_.:-]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional client key; retrying with the same key and payload returns the original request",
+          "title": "Idempotency Key"
+        }
+      },
+      "required": [
+        "participant_id",
+        "fund_id",
+        "purpose",
+        "amount",
+        "description"
+      ],
+      "title": "create_requestArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "$defs": {
+        "AssistanceRequest": {
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "participant_id": {
+              "title": "Participant Id",
+              "type": "string"
+            },
+            "participant_name": {
+              "title": "Participant Name",
+              "type": "string"
+            },
+            "fund_id": {
+              "title": "Fund Id",
+              "type": "string"
+            },
+            "fund_name": {
+              "title": "Fund Name",
+              "type": "string"
+            },
+            "purpose": {
+              "enum": [
+                "rent",
+                "utilities",
+                "transportation",
+                "other"
+              ],
+              "title": "Purpose",
+              "type": "string"
+            },
+            "description": {
+              "title": "Description",
+              "type": "string"
+            },
+            "amount": {
+              "$ref": "#/$defs/Money"
+            },
+            "status": {
+              "$ref": "#/$defs/Status"
+            },
+            "created_by": {
+              "title": "Created By",
+              "type": "string"
+            },
+            "created_at": {
+              "title": "Created At",
+              "type": "string"
+            },
+            "decided_by": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Decided By"
+            },
+            "decided_at": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Decided At"
+            },
+            "decision_note": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Approval note or rejection reason",
+              "title": "Decision Note"
+            },
+            "paid_by": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Paid By"
+            },
+            "paid_at": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Paid At"
+            },
+            "payment_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Payment Id"
+            }
+          },
+          "required": [
+            "id",
+            "participant_id",
+            "participant_name",
+            "fund_id",
+            "fund_name",
+            "purpose",
+            "description",
+            "amount",
+            "status",
+            "created_by",
+            "created_at"
+          ],
+          "title": "AssistanceRequest",
+          "type": "object"
+        },
+        "Money": {
+          "properties": {
+            "cents": {
+              "description": "Exact amount in integer cents",
+              "title": "Cents",
+              "type": "integer"
+            },
+            "amount": {
+              "description": "Decimal string, e.g. \"300.00\"",
+              "title": "Amount",
+              "type": "string"
+            },
+            "currency": {
+              "const": "USD",
+              "default": "USD",
+              "title": "Currency",
+              "type": "string"
+            }
+          },
+          "required": [
+            "cents",
+            "amount"
+          ],
+          "title": "Money",
+          "type": "object"
+        },
+        "Status": {
+          "enum": [
+            "Pending",
+            "Approved",
+            "Rejected",
+            "Paid"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "properties": {
+        "request": {
+          "$ref": "#/$defs/AssistanceRequest"
+        },
+        "replayed": {
+          "description": "True if an earlier request with the same idempotency_key was returned",
+          "title": "Replayed",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "request",
+        "replayed"
+      ],
+      "title": "CreateRequestResult",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "approve_request",
+    "description": "Approve a Pending request (program_manager only). Reserves the full amount against its fund;\nfails with INSUFFICIENT_FUNDS if the fund's available balance is too low.",
+    "inputSchema": {
+      "properties": {
+        "request_id": {
+          "description": "Assistance request ID, e.g. req_\u2026",
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Request Id",
+          "type": "string"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional approval note",
+          "title": "Note"
+        }
+      },
+      "required": [
+        "request_id"
+      ],
+      "title": "approve_requestArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "$defs": {
+        "AssistanceRequest": {
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "participant_id": {
+              "title": "Participant Id",
+              "type": "string"
+            },
+            "participant_name": {
+              "title": "Participant Name",
+              "type": "string"
+            },
+            "fund_id": {
+              "title": "Fund Id",
+              "type": "string"
+            },
+            "fund_name": {
+              "title": "Fund Name",
+              "type": "string"
+            },
+            "purpose": {
+              "enum": [
+                "rent",
+                "utilities",
+                "transportation",
+                "other"
+              ],
+              "title": "Purpose",
+              "type": "string"
+            },
+            "description": {
+              "title": "Description",
+              "type": "string"
+            },
+            "amount": {
+              "$ref": "#/$defs/Money"
+            },
+            "status": {
+              "$ref": "#/$defs/Status"
+            },
+            "created_by": {
+              "title": "Created By",
+              "type": "string"
+            },
+            "created_at": {
+              "title": "Created At",
+              "type": "string"
+            },
+            "decided_by": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Decided By"
+            },
+            "decided_at": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Decided At"
+            },
+            "decision_note": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Approval note or rejection reason",
+              "title": "Decision Note"
+            },
+            "paid_by": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Paid By"
+            },
+            "paid_at": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Paid At"
+            },
+            "payment_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Payment Id"
+            }
+          },
+          "required": [
+            "id",
+            "participant_id",
+            "participant_name",
+            "fund_id",
+            "fund_name",
+            "purpose",
+            "description",
+            "amount",
+            "status",
+            "created_by",
+            "created_at"
+          ],
+          "title": "AssistanceRequest",
+          "type": "object"
+        },
+        "FundSummary": {
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "name": {
+              "title": "Name",
+              "type": "string"
+            },
+            "allocation": {
+              "$ref": "#/$defs/Money"
+            },
+            "committed": {
+              "$ref": "#/$defs/Money",
+              "description": "Approved, not yet paid"
+            },
+            "paid": {
+              "$ref": "#/$defs/Money"
+            },
+            "available": {
+              "$ref": "#/$defs/Money",
+              "description": "allocation - committed - paid"
+            },
+            "request_counts": {
+              "$ref": "#/$defs/RequestCounts"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "allocation",
+            "committed",
+            "paid",
+            "available",
+            "request_counts"
+          ],
+          "title": "FundSummary",
+          "type": "object"
+        },
+        "Money": {
+          "properties": {
+            "cents": {
+              "description": "Exact amount in integer cents",
+              "title": "Cents",
+              "type": "integer"
+            },
+            "amount": {
+              "description": "Decimal string, e.g. \"300.00\"",
+              "title": "Amount",
+              "type": "string"
+            },
+            "currency": {
+              "const": "USD",
+              "default": "USD",
+              "title": "Currency",
+              "type": "string"
+            }
+          },
+          "required": [
+            "cents",
+            "amount"
+          ],
+          "title": "Money",
+          "type": "object"
+        },
+        "RequestCounts": {
+          "properties": {
+            "Pending": {
+              "default": 0,
+              "title": "Pending",
+              "type": "integer"
+            },
+            "Approved": {
+              "default": 0,
+              "title": "Approved",
+              "type": "integer"
+            },
+            "Rejected": {
+              "default": 0,
+              "title": "Rejected",
+              "type": "integer"
+            },
+            "Paid": {
+              "default": 0,
+              "title": "Paid",
+              "type": "integer"
+            }
+          },
+          "title": "RequestCounts",
+          "type": "object"
+        },
+        "Status": {
+          "enum": [
+            "Pending",
+            "Approved",
+            "Rejected",
+            "Paid"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "properties": {
+        "request": {
+          "$ref": "#/$defs/AssistanceRequest"
+        },
+        "fund": {
+          "$ref": "#/$defs/FundSummary"
+        }
+      },
+      "required": [
+        "request",
+        "fund"
+      ],
+      "title": "DecisionResult",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "reject_request",
+    "description": "Reject a Pending request (program_manager only). Funding is unchanged.",
+    "inputSchema": {
+      "properties": {
+        "request_id": {
+          "description": "Assistance request ID, e.g. req_\u2026",
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Request Id",
+          "type": "string"
+        },
+        "reason": {
+          "description": "Reason for rejection",
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_id",
+        "reason"
+      ],
+      "title": "reject_requestArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "$defs": {
+        "AssistanceRequest": {
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "participant_id": {
+              "title": "Participant Id",
+              "type": "string"
+            },
+            "participant_name": {
+              "title": "Participant Name",
+              "type": "string"
+            },
+            "fund_id": {
+              "title": "Fund Id",
+              "type": "string"
+            },
+            "fund_name": {
+              "title": "Fund Name",
+              "type": "string"
+            },
+            "purpose": {
+              "enum": [
+                "rent",
+                "utilities",
+                "transportation",
+                "other"
+              ],
+              "title": "Purpose",
+              "type": "string"
+            },
+            "description": {
+              "title": "Description",
+              "type": "string"
+            },
+            "amount": {
+              "$ref": "#/$defs/Money"
+            },
+            "status": {
+              "$ref": "#/$defs/Status"
+            },
+            "created_by": {
+              "title": "Created By",
+              "type": "string"
+            },
+            "created_at": {
+              "title": "Created At",
+              "type": "string"
+            },
+            "decided_by": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Decided By"
+            },
+            "decided_at": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Decided At"
+            },
+            "decision_note": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Approval note or rejection reason",
+              "title": "Decision Note"
+            },
+            "paid_by": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Paid By"
+            },
+            "paid_at": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Paid At"
+            },
+            "payment_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Payment Id"
+            }
+          },
+          "required": [
+            "id",
+            "participant_id",
+            "participant_name",
+            "fund_id",
+            "fund_name",
+            "purpose",
+            "description",
+            "amount",
+            "status",
+            "created_by",
+            "created_at"
+          ],
+          "title": "AssistanceRequest",
+          "type": "object"
+        },
+        "FundSummary": {
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "name": {
+              "title": "Name",
+              "type": "string"
+            },
+            "allocation": {
+              "$ref": "#/$defs/Money"
+            },
+            "committed": {
+              "$ref": "#/$defs/Money",
+              "description": "Approved, not yet paid"
+            },
+            "paid": {
+              "$ref": "#/$defs/Money"
+            },
+            "available": {
+              "$ref": "#/$defs/Money",
+              "description": "allocation - committed - paid"
+            },
+            "request_counts": {
+              "$ref": "#/$defs/RequestCounts"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "allocation",
+            "committed",
+            "paid",
+            "available",
+            "request_counts"
+          ],
+          "title": "FundSummary",
+          "type": "object"
+        },
+        "Money": {
+          "properties": {
+            "cents": {
+              "description": "Exact amount in integer cents",
+              "title": "Cents",
+              "type": "integer"
+            },
+            "amount": {
+              "description": "Decimal string, e.g. \"300.00\"",
+              "title": "Amount",
+              "type": "string"
+            },
+            "currency": {
+              "const": "USD",
+              "default": "USD",
+              "title": "Currency",
+              "type": "string"
+            }
+          },
+          "required": [
+            "cents",
+            "amount"
+          ],
+          "title": "Money",
+          "type": "object"
+        },
+        "RequestCounts": {
+          "properties": {
+            "Pending": {
+              "default": 0,
+              "title": "Pending",
+              "type": "integer"
+            },
+            "Approved": {
+              "default": 0,
+              "title": "Approved",
+              "type": "integer"
+            },
+            "Rejected": {
+              "default": 0,
+              "title": "Rejected",
+              "type": "integer"
+            },
+            "Paid": {
+              "default": 0,
+              "title": "Paid",
+              "type": "integer"
+            }
+          },
+          "title": "RequestCounts",
+          "type": "object"
+        },
+        "Status": {
+          "enum": [
+            "Pending",
+            "Approved",
+            "Rejected",
+            "Paid"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "properties": {
+        "request": {
+          "$ref": "#/$defs/AssistanceRequest"
+        },
+        "fund": {
+          "$ref": "#/$defs/FundSummary"
+        }
+      },
+      "required": [
+        "request",
+        "fund"
+      ],
+      "title": "DecisionResult",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "record_payment",
+    "description": "Record a simulated payment of the full amount for an Approved request (finance only).\nMoves the amount from committed to paid; available is unchanged. Succeeds once per request.",
+    "inputSchema": {
+      "properties": {
+        "request_id": {
+          "description": "Assistance request ID, e.g. req_\u2026",
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Request Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_id"
+      ],
+      "title": "record_paymentArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "$defs": {
+        "AssistanceRequest": {
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "participant_id": {
+              "title": "Participant Id",
+              "type": "string"
+            },
+            "participant_name": {
+              "title": "Participant Name",
+              "type": "string"
+            },
+            "fund_id": {
+              "title": "Fund Id",
+              "type": "string"
+            },
+            "fund_name": {
+              "title": "Fund Name",
+              "type": "string"
+            },
+            "purpose": {
+              "enum": [
+                "rent",
+                "utilities",
+                "transportation",
+                "other"
+              ],
+              "title": "Purpose",
+              "type": "string"
+            },
+            "description": {
+              "title": "Description",
+              "type": "string"
+            },
+            "amount": {
+              "$ref": "#/$defs/Money"
+            },
+            "status": {
+              "$ref": "#/$defs/Status"
+            },
+            "created_by": {
+              "title": "Created By",
+              "type": "string"
+            },
+            "created_at": {
+              "title": "Created At",
+              "type": "string"
+            },
+            "decided_by": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Decided By"
+            },
+            "decided_at": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Decided At"
+            },
+            "decision_note": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Approval note or rejection reason",
+              "title": "Decision Note"
+            },
+            "paid_by": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Paid By"
+            },
+            "paid_at": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Paid At"
+            },
+            "payment_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Payment Id"
+            }
+          },
+          "required": [
+            "id",
+            "participant_id",
+            "participant_name",
+            "fund_id",
+            "fund_name",
+            "purpose",
+            "description",
+            "amount",
+            "status",
+            "created_by",
+            "created_at"
+          ],
+          "title": "AssistanceRequest",
+          "type": "object"
+        },
+        "FundSummary": {
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "name": {
+              "title": "Name",
+              "type": "string"
+            },
+            "allocation": {
+              "$ref": "#/$defs/Money"
+            },
+            "committed": {
+              "$ref": "#/$defs/Money",
+              "description": "Approved, not yet paid"
+            },
+            "paid": {
+              "$ref": "#/$defs/Money"
+            },
+            "available": {
+              "$ref": "#/$defs/Money",
+              "description": "allocation - committed - paid"
+            },
+            "request_counts": {
+              "$ref": "#/$defs/RequestCounts"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "allocation",
+            "committed",
+            "paid",
+            "available",
+            "request_counts"
+          ],
+          "title": "FundSummary",
+          "type": "object"
+        },
+        "Money": {
+          "properties": {
+            "cents": {
+              "description": "Exact amount in integer cents",
+              "title": "Cents",
+              "type": "integer"
+            },
+            "amount": {
+              "description": "Decimal string, e.g. \"300.00\"",
+              "title": "Amount",
+              "type": "string"
+            },
+            "currency": {
+              "const": "USD",
+              "default": "USD",
+              "title": "Currency",
+              "type": "string"
+            }
+          },
+          "required": [
+            "cents",
+            "amount"
+          ],
+          "title": "Money",
+          "type": "object"
+        },
+        "Payment": {
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "request_id": {
+              "title": "Request Id",
+              "type": "string"
+            },
+            "amount": {
+              "$ref": "#/$defs/Money"
+            },
+            "simulated_reference": {
+              "title": "Simulated Reference",
+              "type": "string"
+            },
+            "recorded_by": {
+              "title": "Recorded By",
+              "type": "string"
+            },
+            "recorded_at": {
+              "title": "Recorded At",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "request_id",
+            "amount",
+            "simulated_reference",
+            "recorded_by",
+            "recorded_at"
+          ],
+          "title": "Payment",
+          "type": "object"
+        },
+        "RequestCounts": {
+          "properties": {
+            "Pending": {
+              "default": 0,
+              "title": "Pending",
+              "type": "integer"
+            },
+            "Approved": {
+              "default": 0,
+              "title": "Approved",
+              "type": "integer"
+            },
+            "Rejected": {
+              "default": 0,
+              "title": "Rejected",
+              "type": "integer"
+            },
+            "Paid": {
+              "default": 0,
+              "title": "Paid",
+              "type": "integer"
+            }
+          },
+          "title": "RequestCounts",
+          "type": "object"
+        },
+        "Status": {
+          "enum": [
+            "Pending",
+            "Approved",
+            "Rejected",
+            "Paid"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "properties": {
+        "request": {
+          "$ref": "#/$defs/AssistanceRequest"
+        },
+        "payment": {
+          "$ref": "#/$defs/Payment"
+        },
+        "fund": {
+          "$ref": "#/$defs/FundSummary"
+        }
+      },
+      "required": [
+        "request",
+        "payment",
+        "fund"
+      ],
+      "title": "PaymentResult",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "get_request",
+    "description": "Get one assistance request of your nonprofit by ID.",
+    "inputSchema": {
+      "properties": {
+        "request_id": {
+          "description": "Assistance request ID, e.g. req_\u2026",
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Request Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_id"
+      ],
+      "title": "get_requestArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "$defs": {
+        "AssistanceRequest": {
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "participant_id": {
+              "title": "Participant Id",
+              "type": "string"
+            },
+            "participant_name": {
+              "title": "Participant Name",
+              "type": "string"
+            },
+            "fund_id": {
+              "title": "Fund Id",
+              "type": "string"
+            },
+            "fund_name": {
+              "title": "Fund Name",
+              "type": "string"
+            },
+            "purpose": {
+              "enum": [
+                "rent",
+                "utilities",
+                "transportation",
+                "other"
+              ],
+              "title": "Purpose",
+              "type": "string"
+            },
+            "description": {
+              "title": "Description",
+              "type": "string"
+            },
+            "amount": {
+              "$ref": "#/$defs/Money"
+            },
+            "status": {
+              "$ref": "#/$defs/Status"
+            },
+            "created_by": {
+              "title": "Created By",
+              "type": "string"
+            },
+            "created_at": {
+              "title": "Created At",
+              "type": "string"
+            },
+            "decided_by": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Decided By"
+            },
+            "decided_at": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Decided At"
+            },
+            "decision_note": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Approval note or rejection reason",
+              "title": "Decision Note"
+            },
+            "paid_by": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Paid By"
+            },
+            "paid_at": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Paid At"
+            },
+            "payment_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Payment Id"
+            }
+          },
+          "required": [
+            "id",
+            "participant_id",
+            "participant_name",
+            "fund_id",
+            "fund_name",
+            "purpose",
+            "description",
+            "amount",
+            "status",
+            "created_by",
+            "created_at"
+          ],
+          "title": "AssistanceRequest",
+          "type": "object"
+        },
+        "Money": {
+          "properties": {
+            "cents": {
+              "description": "Exact amount in integer cents",
+              "title": "Cents",
+              "type": "integer"
+            },
+            "amount": {
+              "description": "Decimal string, e.g. \"300.00\"",
+              "title": "Amount",
+              "type": "string"
+            },
+            "currency": {
+              "const": "USD",
+              "default": "USD",
+              "title": "Currency",
+              "type": "string"
+            }
+          },
+          "required": [
+            "cents",
+            "amount"
+          ],
+          "title": "Money",
+          "type": "object"
+        },
+        "Status": {
+          "enum": [
+            "Pending",
+            "Approved",
+            "Rejected",
+            "Paid"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "properties": {
+        "request": {
+          "$ref": "#/$defs/AssistanceRequest"
+        }
+      },
+      "required": [
+        "request"
+      ],
+      "title": "RequestResult",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "list_requests",
+    "description": "List your nonprofit's assistance requests, newest first, with optional filters.",
+    "inputSchema": {
+      "properties": {
+        "status": {
+          "anyOf": [
+            {
+              "enum": [
+                "Pending",
+                "Approved",
+                "Rejected",
+                "Paid"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Status"
+        },
+        "fund_id": {
+          "anyOf": [
+            {
+              "description": "Fund ID from list_funds",
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fund Id"
+        },
+        "participant_id": {
+          "anyOf": [
+            {
+              "description": "Participant ID from list_participants",
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Participant Id"
+        },
+        "limit": {
+          "anyOf": [
+            {
+              "description": "Maximum rows to return (default 50)",
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Limit"
+        }
+      },
+      "title": "list_requestsArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "$defs": {
+        "AssistanceRequest": {
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "participant_id": {
+              "title": "Participant Id",
+              "type": "string"
+            },
+            "participant_name": {
+              "title": "Participant Name",
+              "type": "string"
+            },
+            "fund_id": {
+              "title": "Fund Id",
+              "type": "string"
+            },
+            "fund_name": {
+              "title": "Fund Name",
+              "type": "string"
+            },
+            "purpose": {
+              "enum": [
+                "rent",
+                "utilities",
+                "transportation",
+                "other"
+              ],
+              "title": "Purpose",
+              "type": "string"
+            },
+            "description": {
+              "title": "Description",
+              "type": "string"
+            },
+            "amount": {
+              "$ref": "#/$defs/Money"
+            },
+            "status": {
+              "$ref": "#/$defs/Status"
+            },
+            "created_by": {
+              "title": "Created By",
+              "type": "string"
+            },
+            "created_at": {
+              "title": "Created At",
+              "type": "string"
+            },
+            "decided_by": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Decided By"
+            },
+            "decided_at": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Decided At"
+            },
+            "decision_note": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Approval note or rejection reason",
+              "title": "Decision Note"
+            },
+            "paid_by": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Paid By"
+            },
+            "paid_at": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Paid At"
+            },
+            "payment_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Payment Id"
+            }
+          },
+          "required": [
+            "id",
+            "participant_id",
+            "participant_name",
+            "fund_id",
+            "fund_name",
+            "purpose",
+            "description",
+            "amount",
+            "status",
+            "created_by",
+            "created_at"
+          ],
+          "title": "AssistanceRequest",
+          "type": "object"
+        },
+        "Money": {
+          "properties": {
+            "cents": {
+              "description": "Exact amount in integer cents",
+              "title": "Cents",
+              "type": "integer"
+            },
+            "amount": {
+              "description": "Decimal string, e.g. \"300.00\"",
+              "title": "Amount",
+              "type": "string"
+            },
+            "currency": {
+              "const": "USD",
+              "default": "USD",
+              "title": "Currency",
+              "type": "string"
+            }
+          },
+          "required": [
+            "cents",
+            "amount"
+          ],
+          "title": "Money",
+          "type": "object"
+        },
+        "Status": {
+          "enum": [
+            "Pending",
+            "Approved",
+            "Rejected",
+            "Paid"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "properties": {
+        "requests": {
+          "items": {
+            "$ref": "#/$defs/AssistanceRequest"
+          },
+          "title": "Requests",
+          "type": "array"
+        }
+      },
+      "required": [
+        "requests"
+      ],
+      "title": "RequestList",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  }
+]

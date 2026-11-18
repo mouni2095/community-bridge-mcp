@@ -1,6 +1,6 @@
 # Community Bridge Emergency Assistance — MCP Server Specification
 
-**Version:** 1.0 (initial, written before implementation) · **Status:** Approved for build
+**Version:** 1.1 (v1.0 written and committed before implementation; see git history) · **Status:** Implemented
 Revisions after v1.0 are listed in §11 with reasons.
 
 ---
@@ -92,7 +92,7 @@ Totals are **derived** from request rows (`SUM` by status), not stored counters,
 ### 2.3 Validation (all before any write)
 
 - `participant_id`, `fund_id` must exist **in caller's nonprofit** (else `NOT_FOUND`).
-- `amount`: JSON string matching `^\d{1,7}(\.\d{1,2})?$`, value > 0 and ≤ 1000000.00 (else `VALIDATION_ERROR`). Strings, not JSON numbers, so no binary-float rounding can occur before the server sees the value.
+- `amount`: JSON string matching `^[0-9]{1,7}(\.[0-9]{1,2})?$`, value > 0 and ≤ 1000000.00 (else `VALIDATION_ERROR`). Strings, not JSON numbers, so no binary-float rounding can occur before the server sees the value.
 - `purpose` ∈ enum; `description` 1–500 chars after trim; `reason` (reject) 1–500 chars; `note` (approve) ≤ 500.
 - `idempotency_key` optional, 1–100 chars `[A-Za-z0-9_.:-]`.
 - Check order: authenticate → authorize role → validate input → load (tenant-scoped) → state check → funds check → write.
@@ -138,7 +138,7 @@ Stored and computed as `INTEGER` cents. Parsed from the input string with `decim
 
 ### 3.4 Concurrency
 
-SQLite in WAL mode, `busy_timeout` 5 s. Every mutating operation runs in `BEGIN IMMEDIATE` (takes the write lock up front), so the read of current totals and the status update are serialized against any other writer — including other processes. Approval re-reads the request and fund totals inside the transaction and uses `UPDATE … WHERE id=? AND status='Pending'`; payment uses `WHERE status='Approved'` plus the unique payment row. Two approvals competing for the last dollars: one commits, the other sees reduced availability and gets `INSUFFICIENT_FUNDS`.
+SQLite in WAL mode, `busy_timeout` 5 s. Every mutating operation runs in `BEGIN IMMEDIATE` (takes the write lock up front), so the read of current totals and the status update are serialized against any other writer — including other processes. Approval re-reads the request and fund totals inside the transaction and uses `UPDATE … WHERE id=? AND status='Pending'`; payment uses `WHERE status='Approved'` plus the unique payment row. Two approvals competing for the last dollars: one commits, the other sees reduced availability and gets `INSUFFICIENT_FUNDS`. (A deferred `BEGIN` is not enough: the second writer's read snapshot is stale and SQLite aborts it with `database is locked` instead of letting it wait — verified by mutation test, v1.1.)
 
 IDs: seed data uses readable IDs; created rows use `req_`/`pay_` + UUID4 hex.
 
@@ -283,3 +283,7 @@ Application logs (Python `logging`) → stderr, optionally `CB_LOG_FILE`. Logged
 | Version | Change | Reason |
 |---|---|---|
 | 1.0 | Initial specification | – |
+| 1.1 | §2.3 amount pattern `\d` → `[0-9]` | Code review: Python's `\d` matches non-ASCII digits (e.g. `"٣٠٠"`), which `Decimal` would accept. Test added. |
+| 1.1 | NFR-2 clarified: server exits with code 2 and a stderr hint if the DB file is missing | Startup must never create or seed data; failing fast is clearer than failing on first call. Test added. |
+| 1.1 | §3.4 rationale for `BEGIN IMMEDIATE` expanded | Mutation test: with a deferred `BEGIN`, SQLite still prevented overspend but concurrent approvers failed with `database is locked` (stale read snapshot cannot upgrade to a write). `IMMEDIATE` makes them queue and return a clean `INSUFFICIENT_FUNDS`. |
+| 1.1 | §4: SDK pinned to `mcp==2.3.0` (`MCPServer`; FastMCP was renamed in 2.x) | Verified with a spike that typed returns publish `outputSchema`/`structuredContent` and that `CallToolResult(isError)` passes through unchanged before fixing the error contract. |
