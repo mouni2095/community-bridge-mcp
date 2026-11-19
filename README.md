@@ -90,4 +90,3 @@ About 25 minutes of active work, measured from the git timestamps, in two sessio
 - **Session 1, about 15 minutes:** the spec, the SDK spike, the implementation, the tests, the mutation checks and the first docs.
 - **Session 2, about 10 minutes:** closing gaps (request-ID logging, extra tests, the Python 3.12 run) and revising the docs.
 
-This was well under the 3-hour limit because an AI agent did most of the drafting (see `docs/AI_USAGE.md`). My time went into directing and checking the work.
