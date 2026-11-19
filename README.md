@@ -90,5 +90,5 @@ Assumptions are in spec sections 1.4 and 10. The main ones: one role and one non
 |---|---|
 | Spec, implementation, tests and first docs (AI-assisted, from git timestamps) | ~15 min |
 | Closing gaps and revising docs (AI-assisted) | ~10 min |
-| Reading and understanding the code, checking it against the spec, running the demo and tests myself | __ h __ min |
-| **Total** | **__ h __ min** |
+| Reading and understanding the code, checking it against the spec, running the demo and tests myself | ~2 h |
+| **Total** | **~2 h 25 min** |
