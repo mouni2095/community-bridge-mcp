@@ -1,7 +1,6 @@
 ============================= test session starts ==============================
-platform linux -- Python 3.13.18, pytest-8.4.2, pluggy-1.7.0 -- /home/claude/cb-mcp/.venv/bin/python
-cachedir: .pytest_cache
-rootdir: /home/claude/cb-mcp
+platform linux -- Python 3.13.18, pytest-8.4.2, pluggy-1.7.0 -- /tmp/cb-mcp/.venv/bin/python
+rootdir: /tmp/cb-mcp
 configfile: pyproject.toml
 testpaths: tests
 plugins: asyncio-1.2.0, anyio-4.16.0
@@ -137,4 +136,4 @@ tests/test_workflow.py::test_funding_summary_totals PASSED               [ 98%]
 tests/test_workflow.py::test_participant_search PASSED                   [ 99%]
 tests/test_workflow.py::test_audit_trail_records_actor PASSED            [100%]
 
-============================= 128 passed in 15.58s =============================
+============================= 128 passed in 19.21s =============================
