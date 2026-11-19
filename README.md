@@ -1,97 +1,91 @@
-# Community Bridge — Emergency Assistance MCP Server
+# Community Bridge: Emergency Assistance MCP Server
 
-A headless MCP server (stdio) for submitting, approving and paying emergency assistance requests against fixed grant funds. It covers multiple nonprofits, enforces roles and never overspends a fund.
+A headless MCP server (stdio) for Community Bridge's emergency assistance funding. Case workers submit requests, program managers approve or reject them, and finance records simulated payments. Every fund's committed, paid and available amounts stay correct throughout. Data is in SQLite, and two synthetic nonprofits are seeded.
 
-| Document | Purpose |
-|---|---|
-| [`docs/SPEC.md`](docs/SPEC.md) | Specification: requirements (IDs), state machine, data model, MCP interface, permissions, acceptance criteria, plan, production security, open questions, revision history |
-| [`docs/TRACEABILITY.md`](docs/TRACEABILITY.md) | Requirement → code → test mapping, mutation checks, what wasn't verified |
-| [`docs/AI_USAGE.md`](docs/AI_USAGE.md) | Three AI-assisted examples with evidence |
-| [`docs/tool-schemas.json`](docs/tool-schemas.json) | Generated input/output JSON Schemas for all 10 tools |
-| [`docs/test-results.txt`](docs/test-results.txt), [`docs/demo-output.txt`](docs/demo-output.txt) | Actual test and demo output |
+Where things are:
 
-`git log` shows the spec (v1.0) was committed before any implementation code.
+- `docs/SPEC.md`: the spec. Requirements, states, data model, tools, permissions, acceptance criteria, plan, production auth design, open questions and revision history. v1.0 was committed before any code.
+- `docs/TRACEABILITY.md`: requirement to code to test mapping, and what I didn't verify.
+- `docs/AI_USAGE.md`: how AI was used, with three examples.
+- `docs/tool-schemas.json`: generated input/output schemas for all 10 tools.
+- `docs/test-results.txt`, `docs/demo-output.txt`: actual output from the last run.
 
-## Setup (Python 3.12+; developed on 3.13)
+## Setup
+
+Python 3.12 or newer (tested on 3.12.3 and 3.13).
 
 ```bash
-python3 -m venv .venv && . .venv/bin/activate
-pip install -r requirements.lock          # exact pinned versions (mcp==2.3.0, pytest==8.4.2, …)
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.lock      # pinned versions, including mcp==2.3.0
 pip install -e . --no-deps
-python -m community_bridge.seed           # setup/reset: deletes and re-seeds ./data/community_bridge.db
+python -m community_bridge.seed       # creates/resets ./data/community_bridge.db
 ```
 
-Reset is a separate command and is safe to repeat. The server never creates or seeds data: it exits with code 2 if the database is missing. Override the location with `CB_DB_PATH` or `--db`.
+The seed command deletes the database and recreates it, so you can run it whenever you want a clean slate. The server itself never creates data. If the database is missing it exits with code 2 and tells you to run the seed command. Use `CB_DB_PATH` (or `--db` on the seed command) to put the file somewhere else.
 
-## Run
+## Running
 
 ```bash
-CB_STAFF_ID=cb-case-worker python -m community_bridge     # stdio MCP server
+CB_STAFF_ID=cb-case-worker python -m community_bridge
 ```
 
-| Env var | Meaning |
-|---|---|
-| `CB_STAFF_ID` | Fixture identity the server acts as (required for any tool to succeed) |
-| `CB_DB_PATH` | SQLite file (default `./data/community_bridge.db`) |
-| `CB_LOG_LEVEL`, `CB_LOG_FILE` | Logging. Logs go to stderr and/or the file, never stdout. |
+`CB_STAFF_ID` picks which fixture user the server acts as. The server looks it up in the database on every call to get the role and nonprofit. Other settings: `CB_DB_PATH`, `CB_LOG_LEVEL` (default INFO) and `CB_LOG_FILE`. Logs go to stderr or the file, never stdout, because stdout carries the MCP protocol.
 
-**Fixture identities**
+Fixture users:
 
-| Nonprofit | Case worker | Program manager | Finance |
+| | Case worker | Program manager | Finance |
 |---|---|---|---|
 | Community Bridge | `cb-case-worker` | `cb-program-manager` | `cb-finance` |
 | Harbor Hope Services | `hh-case-worker` | `hh-program-manager` | `hh-finance` |
 
-`cb-former-staff` is inactive, for testing.
+`cb-former-staff` is a deactivated account, used in tests.
 
-**MCP client config:** see [`examples/mcp_client_config.json`](examples/mcp_client_config.json). It defines one server entry per role and works with Claude Desktop or any stdio MCP client.
+For Claude Desktop or another stdio client, `examples/mcp_client_config.json` has one server entry per role. Replace the placeholder paths with yours.
 
-**Demo (no LLM):** `python -m community_bridge.seed && python scripts/demo_client.py`. The script discovers tools, then runs create (case worker) → approve (program manager) → pay (finance), including a payment retry, and prints the final summary: paid $300, committed $0, available $9,700.
-
-## Test
+To see the whole flow without an LLM:
 
 ```bash
-pytest            # 125 tests: unit, service, permissions, concurrency, MCP end-to-end (~20 s)
-pytest -m e2e     # only the end-to-end tests over real stdio
+python -m community_bridge.seed
+python scripts/demo_client.py
 ```
 
-Latest run: **125 passed, 0 failed, 0 skipped** (`docs/test-results.txt`). I also ran the concurrency file 5 more times; it passed every time.
+The demo starts the server once per role. As the case worker it lists the tools and creates a $300 request. As the program manager it approves it. As finance it pays it, tries to pay it again (rejected), and prints the fund: $300 paid, $0 committed, $9,700 available.
 
-## Key design decisions
+## Tests
 
-- **Service layer owns all rules; the MCP layer is a thin adapter.** It resolves the caller, calls the service, and maps `DomainError` to an `isError` result with a JSON `{"error":{code,message,details}}` body. The same rules are tested directly and through MCP.
-- **Identity comes from server config, never from tool input.** `CB_STAFF_ID` is re-resolved against the `staff` table on every call. No tool has an identity, role or nonprofit parameter. Free text is stored only as data.
-- **Tenant isolation is enforced at two layers:**
-  - Every query is filtered by the caller's `nonprofit_id`, and foreign IDs return `NOT_FOUND`.
-  - Composite foreign keys stop the database from linking a request to another nonprofit's fund or participant.
-- **Money:** amounts arrive as decimal strings, are parsed with `Decimal` and stored as integer cents. Output is `{cents, amount, currency}`.
-- **Totals are derived, not stored:** `committed`, `paid` and `available` are computed from request rows, so they can't drift.
-- **Concurrency:** every write runs in a SQLite `BEGIN IMMEDIATE` transaction (WAL, 5 s busy timeout). The availability check and the status change are serialised across threads *and processes*. Verification:
-  - 10 approvers are released at once against a $500 fund with $100 requests, in separate processes (5 runs) and threads (20 runs). Exactly 5 succeed every time.
-  - A control test shows a non-atomic version does overspend under the same race.
-- **Retries:**
-  - Repeated approve/pay calls get `INVALID_TRANSITION` with the current status.
-  - The payment table has `UNIQUE(request_id)` as a second guard.
-  - `create_request` accepts an optional `idempotency_key`.
+```bash
+pytest            # all 128 tests, about 20 seconds
+pytest -m e2e     # just the end-to-end tests over stdio
+```
 
-## Assumptions
+Last run: 128 passed, none failed or skipped, on both Python versions. I also ran the concurrency tests five more times in a row; they passed every time.
 
-Spec §1.4 and §10 list all of them. The main ones:
+## Design notes
 
-- Each staff member has one nonprofit and one role.
-- Funds have no purpose restrictions or expiry.
-- A request may be submitted above current availability; the check happens at approval.
-- There's a $1,000,000 cap per request.
+The full reasoning is in the spec; these are the decisions a reviewer will probably ask about.
 
-## Limitations and next priorities
+- **The rules live in `service.py`.** `server.py` only resolves the caller, calls the service, and turns errors into `isError` results with a JSON body.
+- **Identity comes from config, not from tool input.** No tool takes a staff ID, role or nonprofit. They come from the database row for `CB_STAFF_ID`, looked up on every call.
+- **Other nonprofits' records look like they don't exist.** Every query filters on the caller's `nonprofit_id`, and a foreign ID gets the same `NOT_FOUND` as a missing one. Composite foreign keys enforce this in the database as well.
+- **Money is exact.** Amounts arrive as strings like `"300.00"` and are stored as integer cents. Committed, paid and available are calculated from the requests, not stored as counters.
+- **Approvals can't overspend.** Every write runs in a SQLite `BEGIN IMMEDIATE` transaction, so checking the balance and approving happen as one step, even across server processes.
+  - The test releases 10 approvers at once against a $500 fund with ten $100 requests. Exactly 5 succeed, across 5 multi-process runs and 20 threaded runs.
+  - A deliberately broken version, which checks and writes separately, does overspend under the same test.
+- **Retries are safe.** A repeated approve or pay returns `INVALID_TRANSITION` with the current status. Payments are also unique per request in the database. `create_request` takes an optional `idempotency_key`.
 
-- **Single-file SQLite:** fine for local stdio and several processes on one machine. Not suitable for network file systems or high write concurrency. Next step would be Postgres with `SELECT … FOR UPDATE` on the fund row.
-- **No way to release a commitment** (cancel or expire an approved request). This was out of scope, and it's the first business gap I'd raise (open question 6).
-- **Pagination is a simple `limit`** with no cursor.
-- **Production auth (OAuth resource server) is designed, not built** (spec §9). The service's `Caller` boundary is where it would plug in.
-- **Audit events are written but no tool reads them.**
-- Not done: load testing, input fuzzing, and a run with a real LLM client.
+Assumptions are in spec sections 1.4 and 10. The main ones: one role and one nonprofit per person; no purpose limits on funds; over-budget requests can be submitted but not approved.
+
+## Limitations and what I'd do next
+
+- Money can't be released from an approved request that never gets paid. Cancellation was out of scope, but it's the first thing I'd raise with the business (open question 6).
+- SQLite works for local use and a few processes on one machine. It isn't suitable for network drives or heavy write load. For a hosted version I'd move to Postgres and lock the fund row (`SELECT ... FOR UPDATE`) during approval.
+- OAuth is designed (spec section 9) but not built. It would replace the `CB_STAFF_ID` lookup that produces the `Caller` object; the service wouldn't change.
+- Lists use a simple `limit` with no cursor paging. Audit events are recorded but no tool exposes them yet.
+- Not done: load testing, input fuzzing, and a session with a real LLM client.
 
 ## Time spent
 
-**[Candidate: fill in actual active time.]** The work was done in one AI-assisted session, in this order: spec → spike → implementation → tests → mutation checks → docs (see `git log`).
+- Initial build, from spec to packaged repo: about 25 minutes, going by the git timestamps, with an AI agent doing most of the drafting (see `docs/AI_USAGE.md`).
+- Second pass to close gaps and revise the docs: about 20 minutes.
+- My own review time: **[fill in]**.

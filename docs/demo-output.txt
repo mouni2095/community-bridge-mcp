@@ -4,16 +4,16 @@ Discovered 10 tools: approve_request, create_request, get_funding_summary, get_r
 -> list_funds({})
    Emergency Rent Relief 2026: allocation 10000.00 | committed 0.00 | paid 0.00 | available 10000.00
 -> create_request({"participant_id": "p-cb-001", "fund_id": "fund-cb-rent", "purpose": "rent", "amount": "300.00", "description": "November rent shortfall"})
-   created req_8ea2671f8d1b4a0e8b417feb2e58c29a status=Pending
+   created req_9a045f8b06b14dabba5319265e21af4b status=Pending
 
 === Connected as cb-program-manager (program_manager, Community Bridge) ===
--> approve_request({"request_id": "req_8ea2671f8d1b4a0e8b417feb2e58c29a", "note": "Lease and ledger verified"})
+-> approve_request({"request_id": "req_9a045f8b06b14dabba5319265e21af4b", "note": "Lease and ledger verified"})
    status=Approved
    Emergency Rent Relief 2026: allocation 10000.00 | committed 300.00 | paid 0.00 | available 9700.00
 
 === Connected as cb-finance (finance, Community Bridge) ===
--> record_payment({"request_id": "req_8ea2671f8d1b4a0e8b417feb2e58c29a"})
-   status=Paid payment=pay_63e743d182f44d2782b0b0b0dd8222df ref=SIM-5F276EFCF0F6
+-> record_payment({"request_id": "req_9a045f8b06b14dabba5319265e21af4b"})
+   status=Paid payment=pay_e3d18eff7de34a85988fc25d83c08e99 ref=SIM-2AD2A810C995
 -> record_payment retry: isError=True code=INVALID_TRANSITION
 -> get_funding_summary({"fund_id": "fund-cb-rent"})
 

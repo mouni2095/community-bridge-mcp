@@ -25,18 +25,21 @@ EXPECTED_TOOLS = {
 }
 
 
-def _env(db_path: Path, staff_id: str | None) -> dict[str, str]:
+def _env(db_path: Path, staff_id: str | None, **extra: str) -> dict[str, str]:
     env = {k: v for k, v in os.environ.items() if not k.startswith("CB_")}
     env["CB_DB_PATH"] = str(db_path)
     env["CB_LOG_LEVEL"] = "WARNING"
     if staff_id is not None:
         env["CB_STAFF_ID"] = staff_id
+    env.update(extra)
     return env
 
 
 @asynccontextmanager
-async def session(db_path: Path, staff_id: str | None):
-    params = StdioServerParameters(command=sys.executable, args=["-m", "community_bridge"], env=_env(db_path, staff_id))
+async def session(db_path: Path, staff_id: str | None, **extra_env: str):
+    params = StdioServerParameters(
+        command=sys.executable, args=["-m", "community_bridge"], env=_env(db_path, staff_id, **extra_env)
+    )
     async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as s:
             await s.initialize()
@@ -143,3 +146,24 @@ def test_server_refuses_to_start_without_database(tmp_path):
     assert proc.stdout == ""  # nothing on the protocol channel
     assert "community_bridge.seed" in proc.stderr
     assert not (tmp_path / "missing.db").exists()  # NFR-2: startup never creates data
+
+
+async def test_unknown_fund_summary_over_mcp(db_path):
+    async with session(db_path, "hh-finance") as s:
+        # Exists, but belongs to the other nonprofit.
+        assert (await call_err(s, "get_funding_summary", {"fund_id": "fund-cb-rent"}))["code"] == "NOT_FOUND"
+
+
+async def test_log_file_has_audit_lines_but_no_participant_data(db_path, tmp_path):
+    log_file = tmp_path / "server.log"
+    async with session(db_path, "cb-case-worker", CB_LOG_LEVEL="INFO", CB_LOG_FILE=str(log_file)) as cw:
+        rid = (await call_ok(cw, "create_request", {
+            "participant_id": "p-cb-001", "fund_id": "fund-cb-rent", "purpose": "rent",
+            "amount": "12.00", "description": "SENSITIVE-DETAIL eviction notice",
+        }))["request"]["id"]
+        await call_err(cw, "approve_request", {"request_id": rid})
+    text = log_file.read_text()
+    assert f"tool=create_request staff=cb-case-worker outcome=ok request={rid}" in text
+    assert f"tool=approve_request staff=cb-case-worker outcome=FORBIDDEN" in text
+    assert "SENSITIVE-DETAIL" not in text
+    assert "Rivera" not in text  # participant surname

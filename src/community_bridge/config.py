@@ -23,7 +23,7 @@ def configured_staff_id() -> str | None:
 
 
 def setup_logging() -> None:
-    """Logs go to stderr (and optionally a file) — never stdout, which carries
+    """Logs go to stderr (and optionally a file), never stdout, which carries
     the MCP stdio protocol."""
     handlers: list[logging.Handler] = [logging.StreamHandler(sys.stderr)]
     log_file = os.environ.get(ENV_LOG_FILE)

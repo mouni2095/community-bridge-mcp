@@ -268,6 +268,9 @@ def test_participant_search(svc, who):
     assert [p.id for p in svc.list_participants(cw, search="Kim").participants] == ["p-cb-002"]
     assert [p.id for p in svc.list_participants(cw, search="p-cb-003").participants] == ["p-cb-003"]
     assert svc.list_participants(cw, search="%").participants == []  # LIKE wildcards escaped
+    assert len(svc.list_participants(cw, limit=2).participants) == 2
+    for bad in (0, 201, True, "5"):
+        expect_error(ErrorCode.VALIDATION_ERROR, svc.list_participants, cw, limit=bad)
 
 
 def test_audit_trail_records_actor(svc, who, make_request, db_path):

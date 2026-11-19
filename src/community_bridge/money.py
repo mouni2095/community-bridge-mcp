@@ -8,7 +8,7 @@ from decimal import Decimal, InvalidOperation
 from .errors import DomainError, ErrorCode
 
 CURRENCY = "USD"
-MAX_REQUEST_CENTS = 1_000_000_00  # $1,000,000.00 sanity cap (spec §2.3, open question 2)
+MAX_REQUEST_CENTS = 1_000_000_00  # $1,000,000.00 sanity cap (spec section 2.3, open question 2)
 AMOUNT_PATTERN = r"^[0-9]{1,7}(\.[0-9]{1,2})?$"
 _AMOUNT_RE = re.compile(AMOUNT_PATTERN)
 

@@ -1,4 +1,4 @@
-"""SQLite storage: connection setup, schema, transactions (NFR-1, spec §3)."""
+"""SQLite storage: connection setup, schema, transactions (NFR-1, spec section 3)."""
 
 from __future__ import annotations
 
@@ -87,7 +87,7 @@ CREATE TABLE audit_event (
 
 def connect(db_path: str | Path) -> sqlite3.Connection:
     # isolation_level=None: we issue BEGIN/COMMIT ourselves so that writes use
-    # BEGIN IMMEDIATE (spec §3.4).
+    # BEGIN IMMEDIATE (spec section 3.4).
     conn = sqlite3.connect(str(db_path), isolation_level=None, timeout=5.0, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")

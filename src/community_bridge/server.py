@@ -1,4 +1,4 @@
-"""MCP adapter (spec §4). Each tool: resolve caller from server config ->
+"""MCP adapter (spec section 4). Each tool: resolve caller from server config ->
 call the service -> return a typed model, or an isError result whose text is
 the JSON error envelope. Identity is never a tool argument (SEC-3)."""
 
@@ -58,14 +58,21 @@ def create_server(db_path: str | Path, staff_id: str | None) -> MCPServer:
     mcp = MCPServer("community-bridge", instructions=INSTRUCTIONS, version="1.0.0")
 
     def run(tool: str, fn: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+        # Log who did what and the outcome. Never log participant names or free text (spec section 8).
         caller_id = staff_id or "<none>"
+        ref = ""
         try:
             caller = service.authenticate(staff_id)  # FR-1: re-resolved on every call
             result = fn(caller, *args, **kwargs)
-            log.info("tool=%s staff=%s outcome=ok", tool, caller_id)
+            req = getattr(result, "request", None)
+            if req is not None:
+                ref = f" request={req.id}"
+            log.info("tool=%s staff=%s outcome=ok%s", tool, caller_id, ref)
             return result
         except DomainError as err:
-            log.info("tool=%s staff=%s outcome=%s", tool, caller_id, err.code)
+            rid = err.details.get("request_id")
+            ref = f" request={rid}" if rid else ""
+            log.info("tool=%s staff=%s outcome=%s%s", tool, caller_id, err.code, ref)
             return _error_result(err)
         except Exception:
             log.exception("tool=%s staff=%s outcome=INTERNAL_ERROR", tool, caller_id)

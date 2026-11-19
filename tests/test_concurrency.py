@@ -117,6 +117,35 @@ def test_concurrent_double_payment_of_same_request(svc, who, make_request, db_pa
     conn.close()
 
 
+def test_concurrent_approve_and_reject_same_request(svc, who, make_request):
+    """Approve and reject racing on one Pending request: exactly one wins, and
+    funding matches whichever outcome won."""
+    pm = who("cb-program-manager")
+    for _ in range(10):
+        rid = make_request("300.00", fund_id="fund-cb-utilities", purpose="utilities").id
+        barrier = threading.Barrier(2)
+
+        def act(kind):
+            barrier.wait()
+            try:
+                if kind == "approve":
+                    svc.approve_request(pm, rid)
+                else:
+                    svc.reject_request(pm, rid, reason="race")
+                return kind
+            except DomainError as err:
+                return str(err.code)
+
+        with ThreadPoolExecutor(2) as pool:
+            outcomes = sorted(pool.map(act, ["approve", "reject"]))
+        assert outcomes in (["INVALID_TRANSITION", "approve"], ["INVALID_TRANSITION", "reject"]), outcomes
+        final = svc.get_request(pm, rid).request.status
+        assert final == ("Approved" if "approve" in outcomes else "Rejected")
+    f = svc.funding_summary(pm, "fund-cb-utilities").funds[0]
+    assert f.committed.cents == 30000 * f.request_counts.Approved
+    assert f.request_counts.Approved + f.request_counts.Rejected == 10
+
+
 # --- Control: prove the race test detects a non-atomic implementation -----------------
 class NonAtomicService(AssistanceService):
     """Check-then-act WITHOUT a surrounding write transaction: the bug BR-3 forbids."""

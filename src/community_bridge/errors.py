@@ -1,4 +1,4 @@
-"""Domain error type and codes (spec §4.1)."""
+"""Domain error type and codes (spec section 4.1)."""
 
 from __future__ import annotations
 

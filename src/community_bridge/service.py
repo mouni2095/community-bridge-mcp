@@ -1,7 +1,7 @@
 """Business rules: identity, permissions, tenant scoping, state transitions and
-fund accounting. Transport-agnostic — the MCP layer is a thin adapter over this.
+fund accounting. It knows nothing about MCP; the MCP layer is a thin adapter over this.
 
-Check order for every operation (spec §2.3):
+Check order for every operation (spec section 2.3):
 authenticate -> authorize role -> validate input -> load (tenant-scoped)
 -> state check -> funds check -> write (single BEGIN IMMEDIATE transaction).
 """
@@ -43,7 +43,7 @@ from .models import (
 )
 from .money import money, parse_amount
 
-# SEC-1: role matrix (spec §5).
+# SEC-1: role matrix (spec section 5).
 PERMISSIONS: dict[Role, frozenset[str]] = {
     Role.CASE_WORKER: frozenset({"read", "create_request"}),
     Role.PROGRAM_MANAGER: frozenset({"read", "approve_request", "reject_request"}),
