@@ -51,4 +51,4 @@ Run by hand once; every change was reverted afterwards.
 
 - No load or performance testing, and no fuzzing of tool inputs.
 - Concurrency was only tested on Linux with a local disk. SQLite locking isn't reliable on network file systems, so that setup isn't supported.
-- The Claude Desktop config is included but I haven't run it with a real LLM client. The end-to-end tests and the demo use the MCP Python client directly.
+- The MCP client config is included but I haven't run it with a real LLM client. The end-to-end tests and the demo use the MCP Python client directly.

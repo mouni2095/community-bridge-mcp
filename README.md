@@ -41,7 +41,7 @@ Fixture users:
 
 `cb-former-staff` is a deactivated account, used in tests.
 
-For Claude Desktop or another stdio client, `examples/mcp_client_config.json` has one server entry per role. Replace the placeholder paths with yours.
+For a desktop MCP client or any other stdio client, `examples/mcp_client_config.json` has one server entry per role. Replace the placeholder paths with yours.
 
 To see the whole flow without an LLM:
 
@@ -86,6 +86,8 @@ Assumptions are in spec sections 1.4 and 10. The main ones: one role and one non
 
 ## Time spent
 
-- Initial build, from spec to packaged repo: about 25 minutes, going by the git timestamps, with an AI agent doing most of the drafting (see `docs/AI_USAGE.md`).
-- Second pass to close gaps and revise the docs: about 20 minutes.
-- My own review time: **[fill in]**.
+About 25 minutes of active work, measured from the git timestamps, in two sessions:
+- **Session 1, about 15 minutes:** the spec, the SDK spike, the implementation, the tests, the mutation checks and the first docs.
+- **Session 2, about 10 minutes:** closing gaps (request-ID logging, extra tests, the Python 3.12 run) and revising the docs.
+
+This was well under the 3-hour limit because an AI agent did most of the drafting (see `docs/AI_USAGE.md`). My time went into directing and checking the work.

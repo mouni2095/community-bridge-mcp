@@ -1,12 +1,12 @@
 # How AI was used
 
-I used Claude (Opus 5.5) as a coding agent with shell access for the whole exercise. I gave it the assessment brief. It drafted the spec, code, tests and these docs, and ran everything in a sandbox. Below are three examples. Each one names the evidence you can re-run yourself, so nothing rests on the agent's say-so.
+I used an AI coding agent (an LLM with shell access) for the whole exercise. I gave it the assessment brief. It drafted the spec, code, tests and these docs, and ran everything in a sandbox. Below are three examples. Each one names the evidence you can re-run yourself, so nothing rests on the agent's say-so.
 
 ## 1. Requirements and spec
 
 The brief says to prevent "duplicate financial effects" and keep each nonprofit's records private. It doesn't say what a retry should return, or what a user should see when they ask for another nonprofit's record.
 
-Claude's draft settled these in the spec rather than leaving them for whoever writes the code:
+The agent's draft settled these in the spec rather than leaving them for whoever writes the code:
 
 - A repeated approve or pay returns `INVALID_TRANSITION` with the current status, rather than quietly succeeding.
 - `create_request` gets an optional idempotency key, since it's the only call where a retry creates a duplicate.
@@ -22,7 +22,7 @@ How it was checked: every acceptance criterion in spec section 6 has a named tes
 
 The plan assumed the usual `FastMCP` class from the Python MCP SDK. The current release turned out to be 2.3.0. There, `mcp.server.fastmcp` is only a stub that raises an error saying FastMCP was renamed to `MCPServer`.
 
-Before writing the error format into the spec, Claude built a throwaway server with two tools and a stdio client to try it. It confirmed three things:
+Before writing the error format into the spec, the agent built a throwaway server with two tools and a stdio client to try it. It confirmed three things:
 - Typed return values produce `outputSchema` and `structuredContent`.
 - Returning a `CallToolResult(is_error=True)` reaches the client unchanged.
 - Bad arguments are rejected by the SDK with its own error text.
@@ -33,10 +33,10 @@ How it was checked: the spike output at the time. Since then, `test_tools_are_di
 
 ## 3. Debugging and verification
 
-All 87 service tests passed on the first run. That's a reason to doubt the tests, not trust them, so Claude checked them two ways:
+All 87 service tests passed on the first run. That's a reason to doubt the tests, not trust them, so the agent checked them two ways:
 
 - **A control for the concurrency test.** A deliberately broken `NonAtomicService` checks the balance and writes in separate steps. Under the same 10-way race it does overspend (`test_control_non_atomic_approval_overspends`). So the race test really can detect the bug it's there for.
-- **Mutation checks.** Claude broke seven protections in the source one at a time (list in `TRACEABILITY.md`):
+- **Mutation checks.** The agent broke seven protections in the source one at a time (list in `TRACEABILITY.md`):
   - Six were caught by the tests.
   - One (allowing payment from `Pending`) survived. Running it by hand showed the conditional `UPDATE ... WHERE status='Approved'` still blocked it, so it's a harmless duplicate guard rather than a missing test.
   - Switching to a plain `BEGIN` turned up something the spec hadn't said. SQLite still stops the overspend, but the competing approvers crash with `database is locked` instead of getting a proper error. The spec now explains this (revision 1.1).
