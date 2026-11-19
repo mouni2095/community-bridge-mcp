@@ -86,7 +86,9 @@ Assumptions are in spec sections 1.4 and 10. The main ones: one role and one non
 
 ## Time spent
 
-About 25 minutes of active work, measured from the git timestamps, in two sessions:
-- **Session 1, about 15 minutes:** the spec, the SDK spike, the implementation, the tests, the mutation checks and the first docs.
-- **Session 2, about 10 minutes:** closing gaps (request-ID logging, extra tests, the Python 3.12 run) and revising the docs.
-
+| Activity | Time |
+|---|---|
+| Spec, implementation, tests and first docs (AI-assisted, from git timestamps) | ~15 min |
+| Closing gaps and revising docs (AI-assisted) | ~10 min |
+| Reading and understanding the code, checking it against the spec, running the demo and tests myself | __ h __ min |
+| **Total** | **__ h __ min** |
